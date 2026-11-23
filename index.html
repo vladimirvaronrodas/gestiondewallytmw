@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" type="image/jpeg" href="logo-tmw.jpg" />
-  <link rel="alternate icon" type="image/png" href="logo-tmw.png" />
+  <link rel="icon" type="image/png" href="logo-tmw.png" />
   <title>⚡🏐 Gestión de Wally TMW 🏐⚡</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -63,8 +62,8 @@
       <div class="flex flex-col items-center text-center mb-6">
         <div class="w-32 h-32 sm:w-36 sm:h-36 rounded-3xl hero-gradient p-1.5 shadow-xl mb-4 flex items-center justify-center overflow-hidden">
           <div class="w-full h-full bg-slate-950 rounded-2xl flex items-center justify-center overflow-hidden p-1.5">
-            <img id="platformMainLogo" src="logo-tmw.jpg" alt="Logo The Marvels Wally"
-                 onerror="if(!this.dataset.triedPng){this.dataset.triedPng='1';this.src='logo-tmw.png';}else{this.classList.add('hidden');document.getElementById('fallbackHeroIcon').classList.remove('hidden');}"
+            <img id="platformMainLogo" src="logo-tmw.png" alt="Logo The Marvels Wally"
+                 onerror="this.classList.add('hidden'); document.getElementById('fallbackHeroIcon').classList.remove('hidden');"
                  class="w-full h-full object-contain rounded-xl" />
             <div id="fallbackHeroIcon" class="hidden flex flex-col items-center justify-center text-white">
               <span class="text-5xl">🏐</span>
