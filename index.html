@@ -598,7 +598,7 @@
     </div>
   </div>
 
-  <!-- MODAL: HISTORIAL DE JORNADAS -->
+  <!-- MODAL: HISTORIAL DE JORNADAS (CON OPCIÓN DE ELIMINAR PARTIDO) -->
   <div id="sessionsModal" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 z-50 bg-slate-950/80 flex items-center justify-center p-4">
     <div onclick="event.stopPropagation()" class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
       <div class="px-5 py-4 bg-slate-900 text-white flex justify-between items-center">
@@ -1746,9 +1746,15 @@
     function openSessionsModal() {
       const list = document.getElementById('sessionsModalList');
       list.innerHTML = allSessions.map(s => `
-        <div onclick="selectSession('${s.id}')" class="p-3 rounded-xl border cursor-pointer ${s.id === activeSession?.id ? 'bg-marvelBlue-50 border-marvelBlue-400' : 'bg-white border-slate-200'}">
-          <div class="font-extrabold text-sm">${escapeHtml(s.title)}</div>
-          <div class="text-xs text-slate-500">Fecha: ${escapeHtml(s.session_date)} • Cuota: ${s.quota} Bs • Multa: ${s.fine_amount} Bs</div>
+        <div onclick="selectSession('${s.id}')" class="flex items-center justify-between gap-2 p-3 rounded-xl border cursor-pointer ${s.id === activeSession?.id ? 'bg-marvelBlue-50 border-marvelBlue-400' : 'bg-white border-slate-200 hover:border-slate-300'}">
+          <div class="min-w-0">
+            <div class="font-extrabold text-sm truncate">${escapeHtml(s.title)}</div>
+            <div class="text-xs text-slate-500">Fecha: ${escapeHtml(s.session_date)} • Cuota: ${s.quota} Bs • Multa: ${s.fine_amount} Bs</div>
+          </div>
+          <button type="button" onclick="event.stopPropagation(); deleteSessionFromHistory('${s.id}', '${escapeHtml(s.title)}')" title="Eliminar este partido del historial"
+                  class="px-2.5 py-1.5 rounded-lg bg-marvelRed-50 hover:bg-marvelRed-600 text-marvelRed-700 hover:text-white border border-marvelRed-200 text-xs font-extrabold shrink-0 transition">
+            🗑️ Eliminar
+          </button>
         </div>
       `).join('');
       document.getElementById('sessionsModal').classList.remove('hidden');
@@ -1760,20 +1766,50 @@
       await loadActiveSessionEntries();
     }
 
+    async function deleteSessionFromHistory(sessionId, sessionTitle) {
+      const ok = confirm(`¿Eliminar el partido "${sessionTitle}" del historial? Se borrarán también sus asistencias y registros asociados.`);
+      if (!ok) return;
+
+      const { error: entriesErr } = await sb.from('session_entries').delete().eq('session_id', sessionId);
+      if (entriesErr) {
+        return showToast('Error al borrar registros del partido: ' + entriesErr.message);
+      }
+
+      const { error: sessErr } = await sb.from('sessions').delete().eq('id', sessionId);
+      if (sessErr) {
+        return showToast('Error al eliminar partido: ' + sessErr.message);
+      }
+
+      const wasActive = activeSession?.id === sessionId;
+      allSessions = allSessions.filter(s => s.id !== sessionId);
+
+      if (allSessions.length === 0) {
+        document.getElementById('sessionsModal').classList.add('hidden');
+        await loadSessions();
+      } else {
+        if (wasActive) {
+          activeSession = allSessions[0];
+          await loadActiveSessionEntries();
+        }
+        openSessionsModal();
+      }
+
+      showToast(`Partido "${sessionTitle}" eliminado`);
+    }
+
     // =========================================================
     // PESTAÑA MULTAS + WHATSAPP DIRECTO + EXPORTACIÓN INDIVIDUAL Y GENERAL
     // =========================================================
     let loadedFines = [];
     async function renderFinesTab() {
       const filterSelect = document.getElementById('finesSessionFilter');
-      if (filterSelect.options.length === 1) {
-        allSessions.forEach(s => {
-          const opt = document.createElement('option');
-          opt.value = s.id;
-          opt.textContent = `${s.title} (${s.session_date})`;
-          filterSelect.appendChild(opt);
-        });
-      }
+      filterSelect.innerHTML = '<option value="all">Todas las pendientes</option>';
+      allSessions.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.title} (${s.session_date})`;
+        filterSelect.appendChild(opt);
+      });
 
       let query = sb.from('session_entries')
         .select('*, sessions!inner(id, title, session_date, day_of_week, club_id), players(player_code, full_name, phone)')
