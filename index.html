@@ -101,6 +101,27 @@
   </div>
 
   <!-- =========================================================
+       BLOQUEO POR SUSPENSIÓN / FALTA DE PAGO
+       ========================================================= -->
+  <div id="suspendedScreen" class="hidden fixed inset-0 z-50 bg-slate-950/95 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-7 text-center space-y-4 shadow-2xl border-2 border-marvelRed-200">
+      <div class="w-16 h-16 rounded-2xl bg-marvelRed-100 text-marvelRed-600 flex items-center justify-center text-3xl mx-auto">
+        ⛔
+      </div>
+      <h2 class="font-display font-black text-xl text-slate-900 uppercase">Acceso Suspendido</h2>
+      <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+        El acceso para <strong id="suspendedClubName" class="text-slate-900">este Wally</strong> se encuentra temporalmente restringido por falta de pago o regularización de servicio.
+      </p>
+      <p class="text-xs font-bold text-marvelBlue-700 bg-marvelBlue-50 py-2.5 px-3 rounded-xl">
+        Comunícate con el administrador de Gestión de Wally TMW para reactivar tu cuenta.
+      </p>
+      <button type="button" onclick="handleLogout()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-3 rounded-xl text-xs uppercase">
+        Cerrar Sesión
+      </button>
+    </div>
+  </div>
+
+  <!-- =========================================================
        PANEL PRINCIPAL DEL ADMINISTRADOR DE CADA WALLY
        ========================================================= -->
   <div id="appContainer" class="hidden flex-1 flex flex-col justify-between">
@@ -588,9 +609,9 @@
     </div>
   </div>
 
-  <!-- MODAL: SUPER ADMIN (CREAR USUARIOS + CAMBIAR LOGO PRINCIPAL) -->
+  <!-- MODAL: SUPER ADMIN (CREAR USUARIOS + SUSPENDER/ELIMINAR + LOGO PRINCIPAL) -->
   <div id="superAdminModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl my-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl my-auto max-h-[92vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-3">
         <h3 class="font-display font-black text-lg text-amber-600 uppercase">👑 Panel Super Admin</h3>
         <button onclick="document.getElementById('superAdminModal').classList.add('hidden')" class="font-bold">✕</button>
@@ -627,8 +648,18 @@
         </button>
       </form>
 
-      <div class="pt-3 border-t space-y-2">
-        <h4 class="text-xs font-black uppercase text-slate-800">2. Logo Principal de Pantalla de Inicio</h4>
+      <div class="pt-4 border-t space-y-2.5">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-black uppercase text-slate-800">2. Clientes / Administradores Registrados</h4>
+          <button type="button" onclick="loadManagedClubsForSuperAdmin()" class="text-[11px] font-extrabold text-marvelBlue-600 hover:underline">
+            ↻ Actualizar
+          </button>
+        </div>
+        <div id="superAdminClubsList" class="space-y-2"></div>
+      </div>
+
+      <div class="pt-4 border-t space-y-2">
+        <h4 class="text-xs font-black uppercase text-slate-800">3. Logo Principal de Pantalla de Inicio</h4>
         <p class="text-[11px] text-slate-500">Por defecto usa el archivo <code>logo-tmw.png</code> de tu carpeta, o puedes subir uno aquí.</p>
         <input type="file" accept="image/*" onchange="uploadGlobalPlatformLogo(event)" class="text-xs" />
       </div>
@@ -687,6 +718,7 @@
     let pendingAssetType = null;
     let quickRegEntryId = null;
     let editingPlayerId = null;
+    let superAdminClubs = [];
 
     function getLocalTodayIso() {
       const now = new Date();
@@ -823,26 +855,36 @@
 
     async function initDashboard() {
       document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('appContainer').classList.remove('hidden');
 
       const { data: profile, error: profErr } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
       if (profErr || !profile) {
+        document.getElementById('appContainer').classList.remove('hidden');
         showToast('Error al leer perfil: ' + (profErr?.message || 'Sin perfil'));
         return;
       }
 
       currentProfile = profile;
-      document.getElementById('loggedUsernameBadge').textContent = profile.username;
-      if (String(profile.role).toLowerCase() === 'superadmin') {
-        document.getElementById('superAdminBtn').classList.remove('hidden');
-      }
+      const isSuper = String(profile.role).toLowerCase() === 'superadmin';
 
       const { data: clubs, error: clubErr } = await sb.from('clubs').select('*').eq('owner_id', currentUser.id);
       if (clubErr || !clubs || clubs.length === 0) {
+        document.getElementById('appContainer').classList.remove('hidden');
         showToast('Error al cargar club: ' + (clubErr?.message || 'Sin club vinculado'));
         return;
       }
       currentClub = clubs[0];
+
+      if (!isSuper && currentClub.is_suspended) {
+        document.getElementById('suspendedClubName').textContent = currentClub.name;
+        document.getElementById('suspendedScreen').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('appContainer').classList.remove('hidden');
+      document.getElementById('loggedUsernameBadge').textContent = profile.username;
+      if (isSuper) {
+        document.getElementById('superAdminBtn').classList.remove('hidden');
+      }
 
       document.getElementById('clubNameHeader').textContent = currentClub.name;
       refreshClubPrefixLabels();
@@ -1060,10 +1102,91 @@
     }
 
     // =========================================================
-    // SUPER ADMIN: CREAR NUEVOS USUARIOS DE WALLY VIA RPC SQL
+    // SUPER ADMIN: CREAR + SUSPENDER/REACTIVAR + ELIMINAR USUARIOS
     // =========================================================
-    function openSuperAdminModal() {
+    async function openSuperAdminModal() {
       document.getElementById('superAdminModal').classList.remove('hidden');
+      await loadManagedClubsForSuperAdmin();
+    }
+
+    async function loadManagedClubsForSuperAdmin() {
+      const listEl = document.getElementById('superAdminClubsList');
+      listEl.innerHTML = `<p class="text-xs text-slate-400 py-2">Cargando clientes...</p>`;
+
+      const { data, error } = await sb.rpc('list_clubs_superadmin_rpc');
+      if (error) {
+        listEl.innerHTML = `<p class="text-xs text-marvelRed-600 py-2">Error al cargar clientes: ${escapeHtml(error.message)}</p>`;
+        return;
+      }
+
+      superAdminClubs = data || [];
+      if (superAdminClubs.length === 0) {
+        listEl.innerHTML = `<p class="text-xs text-slate-400 py-2">Aún no creaste otros usuarios de Wally.</p>`;
+        return;
+      }
+
+      listEl.innerHTML = superAdminClubs.map(item => {
+        const suspended = Boolean(item.is_suspended);
+        const statusBadge = suspended
+          ? `<span class="text-[10px] font-black bg-marvelRed-100 text-marvelRed-700 px-2 py-0.5 rounded-full">⛔ Suspendido</span>`
+          : `<span class="text-[10px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">✅ Activo</span>`;
+
+        const toggleBtnLabel = suspended ? 'Reactivar' : 'Suspender';
+        const toggleBtnStyle = suspended
+          ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+          : 'bg-amber-400 hover:bg-amber-300 text-slate-950';
+
+        return `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl border ${suspended ? 'border-marvelRed-200 bg-marvelRed-50/40' : 'border-slate-200 bg-slate-50'}">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span class="bg-slate-900 text-white text-[10px] font-black px-2 py-0.5 rounded">${escapeHtml(item.code_prefix || 'TM')}</span>
+                <span class="font-extrabold text-xs sm:text-sm text-slate-900 truncate">${escapeHtml(item.club_name)}</span>
+                ${statusBadge}
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">Usuario: <strong>${escapeHtml(item.username || '-')}</strong></p>
+            </div>
+            <div class="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+              <button type="button" onclick="toggleSuspendClub('${item.club_id}', ${!suspended})"
+                      class="px-2.5 py-1.5 rounded-lg text-[11px] font-extrabold transition ${toggleBtnStyle}">
+                ${toggleBtnLabel}
+              </button>
+              <button type="button" onclick="deleteClubAccount('${item.owner_id}', '${escapeHtml(item.username || '')}', '${escapeHtml(item.club_name)}')"
+                      class="px-2.5 py-1.5 rounded-lg text-[11px] font-extrabold bg-marvelRed-600 hover:bg-marvelRed-700 text-white transition">
+                Eliminar
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function toggleSuspendClub(clubId, nextSuspendedState) {
+      const { error } = await sb
+        .from('clubs')
+        .update({ is_suspended: nextSuspendedState })
+        .eq('id', clubId);
+
+      if (error) {
+        return showToast('Error al cambiar estado: ' + error.message);
+      }
+
+      await loadManagedClubsForSuperAdmin();
+      showToast(nextSuspendedState ? 'Acceso suspendido por falta de pago' : 'Acceso reactivado');
+    }
+
+    async function deleteClubAccount(ownerId, username, clubName) {
+      if (!ownerId) return;
+      const ok = confirm(`¿Eliminar definitivamente al usuario "${username}" y su club "${clubName}"? Esta acción borrará sus jornadas, jugadores y multas.`);
+      if (!ok) return;
+
+      const { error } = await sb.rpc('delete_club_admin_rpc', { p_owner_id: ownerId });
+      if (error) {
+        return showToast('Error al eliminar usuario: ' + error.message);
+      }
+
+      await loadManagedClubsForSuperAdmin();
+      showToast(`Usuario "${username}" eliminado`);
     }
 
     async function createNewClubAdmin(e) {
@@ -1100,8 +1223,8 @@
         return;
       }
 
-      document.getElementById('superAdminModal').classList.add('hidden');
       e.target.reset();
+      await loadManagedClubsForSuperAdmin();
       showToast(`Usuario "${username}" creado (${codePrefix}001)`);
     }
 
@@ -1380,17 +1503,12 @@
 
       lines.forEach(line => {
         const trimmed = line.trim();
-        // Solo líneas que empiezan con número (1., 2.-, 3), etc.)
         if (!/^\d/.test(trimmed)) return;
-
-        // Ignorar líneas de reglas, avisos, dos puntos o símbolos de cancha/número
         if (blockedWordsRegex.test(trimmed) || /[:#]/.test(trimmed)) return;
 
-        // Quitar solo el número inicial y separadores de índice
         let withoutIndex = trimmed.replace(/^\d+[\s.\-–—)_:;•*]+/, '').trim();
         if (!withoutIndex) return;
 
-        // Reconocer PREFIJO (2 a 3 letras) + dígitos adyacentes (ej. TM 08 -> TM008, WT4 -> WT004)
         let matchedPlayer = null;
         let foundCode = '';
         const prefixPattern = new RegExp(`\\b${prefix}[-\\s]?(\\d{1,3})\\b`, 'i');
@@ -1401,7 +1519,6 @@
           matchedPlayer = directoryPlayers.find(p => p.player_code.toUpperCase() === foundCode.toUpperCase());
         }
 
-        // Quitar el código ya detectado para limpiar el resto (eliminando números sueltos como "08", puntos, guiones, etc.)
         let withoutFoundCode = codeMatch ? withoutIndex.replace(codeMatch[0], ' ') : withoutIndex;
         let onlyLettersName = withoutFoundCode
           .replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]/g, ' ')
@@ -1435,7 +1552,6 @@
         currentEntries = [];
       }
 
-      // Insertar fila por fila en orden estricto para garantizar que NRO 1 quede primero en la base de datos
       const insertedOrdered = [];
       for (const row of rowsToInsert) {
         const { data: insertedRow, error } = await sb
