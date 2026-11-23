@@ -150,8 +150,9 @@
               👑 Super Admin
             </button>
 
-            <button onclick="openNewSessionModal()" class="bg-marvelRed-600 hover:bg-marvelRed-700 text-white text-xs font-extrabold px-3 py-1.5 rounded-xl transition shadow">
-              + Nueva Fecha
+            <button type="button" onclick="openPastDateModal()" title="Cargar un partido de una fecha anterior"
+                    class="bg-marvelBlue-600 hover:bg-marvelBlue-700 text-white text-xs font-extrabold px-3 py-1.5 rounded-xl transition shadow">
+              📅 Cargar fecha anterior
             </button>
 
             <button onclick="openChangePasswordModal()" title="Cambiar tu contraseña de acceso"
@@ -568,13 +569,13 @@
     </div>
   </div>
 
-  <!-- MODAL: NUEVA FECHA (FECHA PASADA O DE HOY + DÍA AUTOMÁTICO + SERIE SI SE REPITE EL DÍA) -->
+  <!-- MODAL: CARGAR FECHA ANTERIOR -->
   <div id="newSessionModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="font-display font-black text-lg uppercase">Nueva Fecha / Jornada</h3>
-      <p class="text-xs text-slate-500">Elige una fecha anterior o la de hoy. El día se calcula solo y, si ya hay partido ese día, se numera automáticamente.</p>
+      <h3 class="font-display font-black text-lg uppercase">📅 Cargar Fecha Anterior</h3>
+      <p class="text-xs text-slate-500">Selecciona una fecha pasada para cargarla. Si ya existe un partido en esa misma fecha, se numerará automáticamente como Partido 2, Partido 3, etc.</p>
       <div>
-        <label class="block text-xs font-bold text-slate-600 mb-1">Fecha del Partido</label>
+        <label class="block text-xs font-bold text-slate-600 mb-1">Fecha Anterior del Partido</label>
         <input type="date" id="newModalDate" onchange="syncNewSessionDayPreview()" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold" />
       </div>
       <div>
@@ -593,7 +594,7 @@
       </div>
       <div class="flex justify-end gap-2 pt-2">
         <button onclick="document.getElementById('newSessionModal').classList.add('hidden')" class="px-4 py-2 text-xs font-bold text-slate-600">Cancelar</button>
-        <button onclick="confirmCreateSession()" class="bg-marvelRed-600 text-white text-xs font-extrabold px-5 py-2.5 rounded-xl">Guardar Jornada</button>
+        <button onclick="confirmCreateSession()" class="bg-marvelBlue-600 hover:bg-marvelBlue-700 text-white text-xs font-extrabold px-5 py-2.5 rounded-xl">Cargar Fecha</button>
       </div>
     </div>
   </div>
@@ -743,6 +744,46 @@
         return `${dayName} ${dateStr}`;
       }
       return `${dayName} ${dateStr} — Partido ${sameDayCount + 1}`;
+    }
+
+    function createTodayDraftSession() {
+      const today = getLocalTodayIso();
+      const dayName = getDayNameFromDateStr(today);
+      const baseQuota = currentClub?.default_quota || 15;
+      return {
+        id: null,
+        isDraft: true,
+        club_id: currentClub.id,
+        title: buildUniqueSessionTitle(today, dayName),
+        session_date: today,
+        day_of_week: dayName,
+        quota: baseQuota,
+        fine_amount: baseQuota,
+        finalized: false
+      };
+    }
+
+    async function ensureActiveSessionPersisted() {
+      if (!activeSession) return null;
+      if (activeSession.id) return activeSession;
+
+      const { data: created, error } = await sb.from('sessions').insert({
+        club_id: currentClub.id,
+        title: activeSession.title,
+        session_date: activeSession.session_date,
+        day_of_week: activeSession.day_of_week,
+        quota: activeSession.quota,
+        fine_amount: activeSession.fine_amount
+      }).select().single();
+
+      if (error || !created) {
+        showToast('Error al crear jornada: ' + (error?.message || ''));
+        return null;
+      }
+
+      activeSession = created;
+      allSessions = [created, ...allSessions.filter(s => s.id !== created.id)];
+      return activeSession;
     }
 
     function refreshClubPrefixLabels() {
@@ -1398,33 +1439,35 @@
 
     async function loadSessions() {
       if (!currentClub) return;
-      const { data } = await sb.from('sessions').select('*').eq('club_id', currentClub.id).order('session_date', { ascending: false }).order('created_at', { ascending: false });
+      const { data } = await sb
+        .from('sessions')
+        .select('*')
+        .eq('club_id', currentClub.id)
+        .order('session_date', { ascending: false })
+        .order('created_at', { ascending: false });
       allSessions = data || [];
 
-      if (allSessions.length === 0) {
-        const today = getLocalTodayIso();
-        const dayName = getDayNameFromDateStr(today);
-        const { data: created, error } = await sb.from('sessions').insert({
-          club_id: currentClub.id,
-          title: `${dayName} ${today}`,
-          session_date: today,
-          day_of_week: dayName,
-          quota: currentClub.default_quota,
-          fine_amount: currentClub.default_quota
-        }).select().single();
-        if (error) {
-          showToast('Error al crear jornada inicial: ' + error.message);
-          return;
-        }
-        allSessions = [created];
+      const todayIso = getLocalTodayIso();
+      const todaySessions = allSessions.filter(s => s.session_date === todayIso);
+      const latestToday = todaySessions[0] || null;
+
+      if (!latestToday || latestToday.finalized) {
+        activeSession = createTodayDraftSession();
+        currentEntries = [];
+        renderJornadaUI();
+        return;
       }
 
-      activeSession = allSessions[0];
+      activeSession = latestToday;
       await loadActiveSessionEntries();
     }
 
     async function loadActiveSessionEntries() {
-      if (!activeSession) return;
+      if (!activeSession || !activeSession.id) {
+        currentEntries = [];
+        renderJornadaUI();
+        return;
+      }
       const { data } = await sb
         .from('session_entries')
         .select('*, players(player_code, full_name, phone)')
@@ -1439,10 +1482,15 @@
       document.getElementById('newModalDayPreview').value = getDayNameFromDateStr(dateVal);
     }
 
-    function openNewSessionModal() {
+    function openPastDateModal() {
       const today = getLocalTodayIso();
-      document.getElementById('newModalDate').value = today;
-      document.getElementById('newModalDayPreview').value = getDayNameFromDateStr(today);
+      const dt = new Date();
+      dt.setDate(dt.getDate() - 1);
+      const yesterday = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+
+      document.getElementById('newModalDate').max = today;
+      document.getElementById('newModalDate').value = yesterday;
+      document.getElementById('newModalDayPreview').value = getDayNameFromDateStr(yesterday);
       document.getElementById('newModalQuota').value = currentClub?.default_quota || 15;
       document.getElementById('newModalFine').value = currentClub?.default_quota || 15;
       document.getElementById('newSessionModal').classList.remove('hidden');
@@ -1450,7 +1498,9 @@
 
     async function confirmCreateSession() {
       if (!currentClub) return;
-      const dateVal = document.getElementById('newModalDate').value || getLocalTodayIso();
+      const dateVal = document.getElementById('newModalDate').value;
+      if (!dateVal) return showToast('Selecciona una fecha anterior');
+
       const dayVal = getDayNameFromDateStr(dateVal);
       const titleVal = buildUniqueSessionTitle(dateVal, dayVal);
       const quotaVal = parseFloat(document.getElementById('newModalQuota').value) || 15;
@@ -1465,14 +1515,12 @@
         fine_amount: fineVal
       }).select().single();
 
-      if (error) return showToast('Error al crear fecha: ' + error.message);
+      if (error) return showToast('Error al cargar fecha anterior: ' + error.message);
       document.getElementById('newSessionModal').classList.add('hidden');
-      await loadSessions();
-      if (created) {
-        activeSession = created;
-        await loadActiveSessionEntries();
-      }
-      showToast(`Guardado: ${titleVal}`);
+      allSessions = [created, ...allSessions.filter(s => s.id !== created.id)];
+      activeSession = created;
+      await loadActiveSessionEntries();
+      showToast(`Cargado: ${titleVal}`);
     }
 
     async function updateSessionMeta() {
@@ -1480,6 +1528,11 @@
       activeSession.title = document.getElementById('sessionTitleInput').value;
       activeSession.quota = parseFloat(document.getElementById('quotaInput').value) || 0;
       activeSession.fine_amount = parseFloat(document.getElementById('fineInput').value) || 0;
+
+      if (!activeSession.id) {
+        renderJornadaUI();
+        return;
+      }
 
       await sb.from('sessions').update({
         title: activeSession.title,
@@ -1537,7 +1590,6 @@
         if (!finalName || finalName.length < 2) return;
 
         rowsToInsert.push({
-          session_id: activeSession.id,
           player_id: matchedPlayer ? matchedPlayer.id : null,
           raw_name: finalName,
           payment_status: 'none',
@@ -1547,8 +1599,11 @@
 
       if (rowsToInsert.length === 0) return showToast('No se hallaron nombres válidos en líneas numeradas');
 
+      const persistedSession = await ensureActiveSessionPersisted();
+      if (!persistedSession) return;
+
       if (!appendMode) {
-        await sb.from('session_entries').delete().eq('session_id', activeSession.id);
+        await sb.from('session_entries').delete().eq('session_id', persistedSession.id);
         currentEntries = [];
       }
 
@@ -1556,7 +1611,7 @@
       for (const row of rowsToInsert) {
         const { data: insertedRow, error } = await sb
           .from('session_entries')
-          .insert(row)
+          .insert({ ...row, session_id: persistedSession.id })
           .select('*, players(player_code, full_name, phone)')
           .single();
         if (error) {
@@ -1643,7 +1698,7 @@
     }
 
     async function markAllAttended() {
-      if (!activeSession) return;
+      if (!activeSession || !activeSession.id) return;
       await sb.from('session_entries').update({ attended: true }).eq('session_id', activeSession.id);
       currentEntries.forEach(e => e.attended = true);
       renderJornadaUI();
@@ -1656,10 +1711,12 @@
       const ok = confirm('¿Vaciar todos los jugadores de esta jornada actual?');
       if (!ok) return;
 
-      const { error } = await sb.from('session_entries').delete().eq('session_id', activeSession.id);
-      if (error) {
-        showToast('Error al limpiar lista: ' + error.message);
-        return;
+      if (activeSession.id) {
+        const { error } = await sb.from('session_entries').delete().eq('session_id', activeSession.id);
+        if (error) {
+          showToast('Error al limpiar lista: ' + error.message);
+          return;
+        }
       }
       currentEntries = [];
       renderJornadaUI();
@@ -1674,16 +1731,20 @@
 
     async function finalizeSessionAndFines() {
       if (!activeSession) return;
+      const persistedSession = await ensureActiveSessionPersisted();
+      if (!persistedSession) return;
+
       const fineVal = parseFloat(activeSession.fine_amount) || 0;
       for (const entry of currentEntries) {
         const fineToApply = entry.attended ? 0 : fineVal;
         await sb.from('session_entries').update({ fine_generated: fineToApply }).eq('id', entry.id);
         entry.fine_generated = fineToApply;
       }
-      await sb.from('sessions').update({ finalized: true }).eq('id', activeSession.id);
+      await sb.from('sessions').update({ finalized: true }).eq('id', persistedSession.id);
       activeSession.finalized = true;
+      allSessions = allSessions.map(s => s.id === persistedSession.id ? { ...s, finalized: true } : s);
       renderJornadaUI();
-      showToast('Asistencia cerrada y multas enviadas a la pestaña Multas');
+      showToast('Partido guardado y multas enviadas a la pestaña Multas');
     }
 
     function renderJornadaUI() {
@@ -1783,14 +1844,10 @@
       const wasActive = activeSession?.id === sessionId;
       allSessions = allSessions.filter(s => s.id !== sessionId);
 
-      if (allSessions.length === 0) {
+      if (wasActive) {
         document.getElementById('sessionsModal').classList.add('hidden');
         await loadSessions();
       } else {
-        if (wasActive) {
-          activeSession = allSessions[0];
-          await loadActiveSessionEntries();
-        }
         openSessionsModal();
       }
 
