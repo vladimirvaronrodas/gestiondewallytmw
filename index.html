@@ -543,7 +543,7 @@
 
       <div class="pt-3 border-t space-y-2">
         <h4 class="text-xs font-black uppercase text-slate-800">2. Logo Principal de Pantalla de Inicio</h4>
-        <p class="text-[11px] text-slate-500">Por defecto usa el archivo <code>logo-tmw.jpg</code> o <code>logo-tmw.png</code> de tu carpeta, o puedes subir uno aquí.</p>
+        <p class="text-[11px] text-slate-500">Por defecto usa el archivo <code>logo-tmw.png</code> de tu carpeta, o puedes subir uno aquí.</p>
         <input type="file" accept="image/*" onchange="uploadGlobalPlatformLogo(event)" class="text-xs" />
       </div>
     </div>
@@ -849,7 +849,7 @@
     }
 
     // =========================================================
-    // SUPER ADMIN: CREAR NUEVOS USUARIOS DE WALLY
+    // SUPER ADMIN: CREAR NUEVOS USUARIOS DE WALLY VIA RPC SQL
     // =========================================================
     function openSuperAdminModal() {
       document.getElementById('superAdminModal').classList.remove('hidden');
@@ -861,24 +861,31 @@
       btn.disabled = true;
       btn.textContent = 'Creando usuario...';
 
-      const payload = {
-        clubName: document.getElementById('saClubName').value.trim(),
-        codePrefix: document.getElementById('saCodePrefix').value.trim().toUpperCase(),
-        defaultQuota: parseFloat(document.getElementById('saQuota').value) || 15,
-        username: document.getElementById('saUsername').value.trim(),
-        password: document.getElementById('saPassword').value
-      };
+      const clubName = document.getElementById('saClubName').value.trim();
+      const codePrefix = document.getElementById('saCodePrefix').value.trim().toUpperCase();
+      const defaultQuota = parseFloat(document.getElementById('saQuota').value) || 15;
+      const username = document.getElementById('saUsername').value.trim();
+      const password = document.getElementById('saPassword').value;
 
-      const { data, error } = await sb.functions.invoke('create-club-admin', { body: payload });
+      const { data, error } = await sb.rpc('create_club_admin_rpc', {
+        p_club_name: clubName,
+        p_code_prefix: codePrefix,
+        p_default_quota: defaultQuota,
+        p_username: username,
+        p_password: password
+      });
+
       btn.disabled = false;
       btn.textContent = 'Crear Usuario y Wally';
 
-      if (error || data?.error) {
-        showToast('Error: ' + (data?.error || error.message));
+      if (error) {
+        showToast('Error: ' + error.message);
         return;
       }
+
       document.getElementById('superAdminModal').classList.add('hidden');
-      showToast(`Usuario "${payload.username}" creado (${payload.codePrefix}001)`);
+      e.target.reset();
+      showToast(`Usuario "${username}" creado (${codePrefix}001)`);
     }
 
     // =========================================================
