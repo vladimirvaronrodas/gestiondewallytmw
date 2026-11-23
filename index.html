@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" type="image/png" href="logo-tmw.png" />
+  <link rel="icon" type="image/jpeg" href="logo-tmw.jpg" />
+  <link rel="alternate icon" type="image/png" href="logo-tmw.png" />
   <title>⚡🏐 Gestión de Wally TMW 🏐⚡</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -27,7 +28,6 @@
     };
   </script>
   <style>
-    /* Temas suaves / pastel seleccionables por cada administrador */
     body.theme-marvel { background: linear-gradient(135deg, #fff1f2 0%, #f1f5f9 50%, #eff6ff 100%); }
     body.theme-pastel-green { background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 55%, #e6fffa 100%); }
     body.theme-pastel-red { background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 60%, #fef2f2 100%); }
@@ -60,16 +60,15 @@
   <div id="loginScreen" class="fixed inset-0 z-50 login-marvel-bg flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white/95 backdrop-blur-md rounded-3xl max-w-md w-full p-7 sm:p-8 shadow-2xl border-2 border-white/20 my-auto">
       
-      <!-- Espacio Grande para el Logo Oficial de The Marvels (logo-tmw.png) -->
       <div class="flex flex-col items-center text-center mb-6">
         <div class="w-32 h-32 sm:w-36 sm:h-36 rounded-3xl hero-gradient p-1.5 shadow-xl mb-4 flex items-center justify-center overflow-hidden">
-          <div class="w-full h-full bg-white rounded-2xl flex items-center justify-center overflow-hidden p-2">
-            <img id="platformMainLogo" src="logo-tmw.png" alt="Logo The Marvels Wally"
-                 onerror="this.classList.add('hidden'); document.getElementById('fallbackHeroIcon').classList.remove('hidden');"
-                 class="w-full h-full object-contain" />
-            <div id="fallbackHeroIcon" class="hidden flex flex-col items-center justify-center">
+          <div class="w-full h-full bg-slate-950 rounded-2xl flex items-center justify-center overflow-hidden p-1.5">
+            <img id="platformMainLogo" src="logo-tmw.jpg" alt="Logo The Marvels Wally"
+                 onerror="if(!this.dataset.triedPng){this.dataset.triedPng='1';this.src='logo-tmw.png';}else{this.classList.add('hidden');document.getElementById('fallbackHeroIcon').classList.remove('hidden');}"
+                 class="w-full h-full object-contain rounded-xl" />
+            <div id="fallbackHeroIcon" class="hidden flex flex-col items-center justify-center text-white">
               <span class="text-5xl">🏐</span>
-              <span class="font-display font-black text-xs text-marvelBlue-900 mt-1">TMW</span>
+              <span class="font-display font-black text-xs mt-1">TMW</span>
             </div>
           </div>
         </div>
@@ -83,7 +82,6 @@
         <p class="text-xs font-bold text-marvelBlue-700 mt-1">The Marvels Wally — Gestión de Juego</p>
       </div>
 
-      <!-- Formulario de Usuario y Contraseña -->
       <form onsubmit="handleLogin(event)" class="space-y-4">
         <div>
           <label class="block text-xs font-extrabold uppercase text-slate-600 mb-1">Nombre de Usuario</label>
@@ -119,7 +117,6 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
-            <!-- Selector de Fondo Pastel -->
             <select id="themeSelector" onchange="changeClubTheme(this.value)" title="Color de fondo de tu plantilla"
                     class="bg-slate-800 border border-slate-700 text-white text-xs font-bold rounded-xl px-2.5 py-2 focus:outline-none">
               <option value="marvel">🎨 Fondo Marvel Suave</option>
@@ -166,7 +163,6 @@
         <aside class="lg:col-span-4 lg:sticky lg:top-3 z-20">
           <div class="glass-card rounded-2xl overflow-hidden border-2 border-slate-200 shadow-xl">
             
-            <!-- Cabecera del Wally Propio (Doble clic en Logo pide contraseña personal) -->
             <div class="hero-gradient px-4 py-3 text-white">
               <div class="flex items-center gap-3">
                 <div ondblclick="triggerAssetAuth('logo')" title="Doble clic para cambiar tu logo (pide tu contraseña)"
@@ -187,7 +183,6 @@
               <input type="file" id="logoFileInput" accept="image/*" class="hidden" onchange="uploadClubImage(event, 'logo_data')" />
             </div>
 
-            <!-- Cuadro de QR Propio (Editar QR pide contraseña personal) -->
             <div class="p-3 bg-white">
               <div class="flex items-center justify-between gap-2">
                 <button onclick="triggerAssetAuth('qr')" title="Cambiar QR (pide tu contraseña)"
@@ -205,7 +200,6 @@
                 </button>
               </div>
 
-              <!-- Verificación Inline de Contraseña Personal para Logo o QR -->
               <div id="assetAuthBox" class="hidden mt-2.5 flex items-center justify-center gap-1.5 bg-slate-100 p-2 rounded-xl border border-slate-300">
                 <span class="text-[10px] font-extrabold text-slate-700 uppercase">Tu Clave:</span>
                 <input type="password" id="assetPassInput" placeholder="••••••"
@@ -223,7 +217,6 @@
         <!-- COLUMNA DERECHA: 4 PESTAÑAS DE GESTIÓN -->
         <section class="lg:col-span-8 space-y-4">
           
-          <!-- Navegación -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white/90 p-1.5 rounded-2xl border border-slate-200 shadow-sm">
             <button onclick="switchTab('jornada')" id="tabBtn_jornada" class="py-2.5 px-3 rounded-xl text-xs font-extrabold uppercase transition bg-slate-900 text-white">
               📋 Jornada Actual
@@ -266,7 +259,6 @@
                 </div>
               </div>
 
-              <!-- Pegado Inteligente de Lista WhatsApp -->
               <div class="mt-4">
                 <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">
                   Pegar Lista de WhatsApp (Conserva prefijos como <span id="prefixHint" class="text-marvelBlue-600">TM001</span>)
@@ -285,7 +277,6 @@
               </div>
             </div>
 
-            <!-- Lista de Jugadores con Ojito (Apodo/Real) + Pagos + Asistencia a la Derecha -->
             <div class="glass-card rounded-2xl p-5">
               <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mb-4">
                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
@@ -310,7 +301,6 @@
                 </div>
               </div>
 
-              <!-- Barra con el Ojito para alternar Apodos vs Nombres Reales -->
               <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <div class="flex items-center gap-2">
                   <h2 class="font-display font-extrabold text-sm sm:text-base uppercase">Lista de Control</h2>
@@ -328,7 +318,6 @@
 
               <div id="playersListContainer" class="space-y-2"></div>
 
-              <!-- Acciones de cierre y reportes con Logo propio estampado -->
               <div class="mt-5 pt-4 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="text-xs font-bold text-slate-600">
                   Recaudado: <span id="statTotalMoney" class="text-base font-black text-emerald-600">0 Bs.</span>
@@ -507,7 +496,6 @@
         <button onclick="document.getElementById('superAdminModal').classList.add('hidden')" class="font-bold">✕</button>
       </div>
 
-      <!-- Crear Nuevo Usuario / Wally -->
       <form onsubmit="createNewClubAdmin(event)" class="space-y-3">
         <h4 class="text-xs font-black uppercase text-slate-800">1. Crear Nuevo Usuario de Wally</h4>
         <div>
@@ -537,10 +525,9 @@
         </button>
       </form>
 
-      <!-- Cambiar Logo Principal de la Plataforma -->
       <div class="pt-3 border-t space-y-2">
         <h4 class="text-xs font-black uppercase text-slate-800">2. Logo Principal de Pantalla de Inicio</h4>
-        <p class="text-[11px] text-slate-500">Por defecto usa el archivo <code>logo-tmw.png</code> de tu carpeta, o puedes subir uno aquí.</p>
+        <p class="text-[11px] text-slate-500">Por defecto usa el archivo <code>logo-tmw.jpg</code> o <code>logo-tmw.png</code> de tu carpeta, o puedes subir uno aquí.</p>
         <input type="file" accept="image/*" onchange="uploadGlobalPlatformLogo(event)" class="text-xs" />
       </div>
     </div>
@@ -601,13 +588,16 @@
     // INICIO Y LOGIN CON USUARIO + CONTRASEÑA
     // =========================================================
     document.addEventListener('DOMContentLoaded', async () => {
-      // Cargar logo global si fue subido por Super Admin
-      const { data: settings } = await sb.from('platform_settings').select('*').eq('id', 1).single();
-      if (settings?.main_logo_data) {
-        const img = document.getElementById('platformMainLogo');
-        img.src = settings.main_logo_data;
-        img.classList.remove('hidden');
-        document.getElementById('fallbackHeroIcon').classList.add('hidden');
+      try {
+        const { data: settings } = await sb.from('platform_settings').select('*').eq('id', 1).single();
+        if (settings?.main_logo_data) {
+          const img = document.getElementById('platformMainLogo');
+          img.src = settings.main_logo_data;
+          img.classList.remove('hidden');
+          document.getElementById('fallbackHeroIcon').classList.add('hidden');
+        }
+      } catch (err) {
+        console.warn('Cargando logo local:', err);
       }
 
       const { data: { session } } = await sb.auth.getSession();
@@ -622,10 +612,16 @@
       const rawUser = document.getElementById('loginUsername').value.trim().toLowerCase();
       const password = document.getElementById('loginPassword').value;
       const errEl = document.getElementById('loginError');
+      const btn = document.getElementById('loginBtn');
       errEl.classList.add('hidden');
+      btn.disabled = true;
+      btn.textContent = 'Verificando...';
 
       const internalEmail = rawUser.includes('@') ? rawUser : `${rawUser}@tmw.local`;
       const { data, error } = await sb.auth.signInWithPassword({ email: internalEmail, password });
+      btn.disabled = false;
+      btn.textContent = 'Ingresar a mi Wally';
+
       if (error) {
         errEl.textContent = 'Usuario o contraseña incorrectos.';
         errEl.classList.remove('hidden');
@@ -644,14 +640,23 @@
       document.getElementById('loginScreen').classList.add('hidden');
       document.getElementById('appContainer').classList.remove('hidden');
 
-      const { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+      const { data: profile, error: profErr } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+      if (profErr || !profile) {
+        showToast('Error al leer perfil: ' + (profErr?.message || 'Sin perfil'));
+        return;
+      }
+
       currentProfile = profile;
       document.getElementById('loggedUsernameBadge').textContent = profile.username;
-      if (profile?.role === 'superadmin') {
+      if (String(profile.role).toLowerCase() === 'superadmin') {
         document.getElementById('superAdminBtn').classList.remove('hidden');
       }
 
-      const { data: clubs } = await sb.from('clubs').select('*').eq('owner_id', currentUser.id);
+      const { data: clubs, error: clubErr } = await sb.from('clubs').select('*').eq('owner_id', currentUser.id);
+      if (clubErr || !clubs || clubs.length === 0) {
+        showToast('Error al cargar club: ' + (clubErr?.message || 'Sin club vinculado'));
+        return;
+      }
       currentClub = clubs[0];
 
       document.getElementById('clubNameHeader').textContent = currentClub.name;
@@ -688,8 +693,10 @@
     }
 
     async function changeClubTheme(theme) {
+      if (!currentClub) return;
       applyThemeClass(theme);
-      await sb.from('clubs').update({ theme_color: theme }).eq('id', currentClub.id);
+      const { error } = await sb.from('clubs').update({ theme_color: theme }).eq('id', currentClub.id);
+      if (error) return showToast('Error al guardar tema: ' + error.message);
       currentClub.theme_color = theme;
       showToast('Color de plantilla actualizado');
     }
@@ -734,9 +741,13 @@
 
     function uploadClubImage(event, field) {
       const file = event.target.files[0];
-      if (!file) return;
+      if (!file || !currentClub) return;
       compressImage(file, async (dataUrl) => {
-        await sb.from('clubs').update({ [field]: dataUrl }).eq('id', currentClub.id);
+        const { error } = await sb.from('clubs').update({ [field]: dataUrl }).eq('id', currentClub.id);
+        if (error) {
+          showToast('Error al guardar imagen: ' + error.message);
+          return;
+        }
         currentClub[field] = dataUrl;
         if (field === 'logo_data') {
           document.getElementById('teamLogoImg').src = dataUrl;
@@ -757,7 +768,8 @@
       const file = event.target.files[0];
       if (!file) return;
       compressImage(file, async (dataUrl) => {
-        await sb.from('platform_settings').update({ main_logo_data: dataUrl }).eq('id', 1);
+        const { error } = await sb.from('platform_settings').update({ main_logo_data: dataUrl }).eq('id', 1);
+        if (error) return showToast('Error al guardar logo principal: ' + error.message);
         document.getElementById('platformMainLogo').src = dataUrl;
         showToast('Logo principal de la plataforma actualizado');
       });
@@ -824,6 +836,7 @@
     // PADRÓN DE JUGADORES CON CÓDIGO DE 3 DÍGITOS (TM001)
     // =========================================================
     async function loadDirectoryPlayers() {
+      if (!currentClub) return;
       const { data } = await sb.from('players').select('*').eq('club_id', currentClub.id).order('player_number', { ascending: true });
       directoryPlayers = data || [];
       renderDirectoryTab();
@@ -832,7 +845,7 @@
     async function createOfficialPlayer(customName = null) {
       const input = document.getElementById('newDirectoryPlayerName');
       const fullName = (customName || input.value).trim();
-      if (!fullName) return null;
+      if (!fullName || !currentClub) return null;
 
       const maxNum = directoryPlayers.reduce((max, p) => Math.max(max, p.player_number), 0);
       const nextNum = maxNum + 1;
@@ -847,7 +860,7 @@
       }).select().single();
 
       if (error) {
-        showToast('Error al registrar jugador');
+        showToast('Error al registrar jugador: ' + error.message);
         return null;
       }
       if (!customName) input.value = '';
@@ -879,12 +892,13 @@
     // PROCESAMIENTO WHATSAPP (MANTIENE PREFIJO TM005 Y APODOS)
     // =========================================================
     async function loadSessions() {
+      if (!currentClub) return;
       const { data } = await sb.from('sessions').select('*').eq('club_id', currentClub.id).order('session_date', { ascending: false }).order('created_at', { ascending: false });
       allSessions = data || [];
 
       if (allSessions.length === 0) {
         const today = new Date().toISOString().split('T')[0];
-        const { data: created } = await sb.from('sessions').insert({
+        const { data: created, error } = await sb.from('sessions').insert({
           club_id: currentClub.id,
           title: `${currentClub.name} — ${today}`,
           session_date: today,
@@ -892,6 +906,10 @@
           quota: currentClub.default_quota,
           fine_amount: currentClub.default_quota
         }).select().single();
+        if (error) {
+          showToast('Error al crear jornada inicial: ' + error.message);
+          return;
+        }
         allSessions = [created];
       }
 
@@ -900,6 +918,7 @@
     }
 
     async function loadActiveSessionEntries() {
+      if (!activeSession) return;
       const { data } = await sb.from('session_entries').select('*, players(player_code, full_name)').eq('session_id', activeSession.id).order('id', { ascending: true });
       currentEntries = data || [];
       renderJornadaUI();
@@ -910,18 +929,19 @@
       document.getElementById('newModalDate').value = today.toISOString().split('T')[0];
       const days = ['Otro', 'Lunes', 'Otro', 'Miércoles', 'Otro', 'Viernes', 'Otro'];
       document.getElementById('newModalDay').value = days[today.getDay()];
-      document.getElementById('newModalQuota').value = currentClub.default_quota;
-      document.getElementById('newModalFine').value = currentClub.default_quota;
+      document.getElementById('newModalQuota').value = currentClub?.default_quota || 15;
+      document.getElementById('newModalFine').value = currentClub?.default_quota || 15;
       document.getElementById('newSessionModal').classList.remove('hidden');
     }
 
     async function confirmCreateSession() {
+      if (!currentClub) return;
       const dateVal = document.getElementById('newModalDate').value;
       const dayVal = document.getElementById('newModalDay').value;
       const quotaVal = parseFloat(document.getElementById('newModalQuota').value) || 15;
       const fineVal = parseFloat(document.getElementById('newModalFine').value) || 15;
 
-      await sb.from('sessions').insert({
+      const { error } = await sb.from('sessions').insert({
         club_id: currentClub.id,
         title: `${dayVal} ${dateVal}`,
         session_date: dateVal,
@@ -930,12 +950,14 @@
         fine_amount: fineVal
       });
 
+      if (error) return showToast('Error al crear fecha: ' + error.message);
       document.getElementById('newSessionModal').classList.add('hidden');
       await loadSessions();
       showToast('Nueva fecha creada');
     }
 
     async function updateSessionMeta() {
+      if (!activeSession) return;
       activeSession.title = document.getElementById('sessionTitleInput').value;
       activeSession.day_of_week = document.getElementById('sessionDaySelect').value;
       activeSession.quota = parseFloat(document.getElementById('quotaInput').value) || 0;
@@ -951,6 +973,7 @@
     }
 
     async function processWhatsAppList() {
+      if (!activeSession) return showToast('No hay jornada activa');
       const rawText = document.getElementById('whatsappRawInput').value;
       if (!rawText.trim()) return showToast('Pega la lista primero');
 
@@ -963,14 +986,12 @@
 
       lines.forEach(line => {
         const trimmed = line.trim();
-        // 1. Solo líneas que empiezan con número
-        if (!/^\d/.test(trimmed)) return;
+        if (!trimmed) return;
+        if (/^(lista|fecha|hora|cancha|lugar|cuota|multa|📅|🏐|⏰|📍|💰)/i.test(trimmed)) return;
 
-        // 2. Eliminar SOLO el número de lista inicial y sus separadores
-        let withoutIndex = trimmed.replace(/^[\d\s.\-–—)_:;•*]+/, '').trim();
-        if (!withoutIndex) return;
+        let withoutIndex = trimmed.replace(/^[\d\uFE0F\u20E3\s.\-–—)_:;•*✅🏐]+/, '').trim();
+        if (!withoutIndex || withoutIndex.length < 2) return;
 
-        // 3. Buscar prefijo + números (ej. TM005, tm5, TM-05)
         const match = withoutIndex.match(codeRegex);
         let matchedPlayer = null;
         let displayNickname = withoutIndex;
@@ -979,18 +1000,16 @@
           const normalizedCode = `${prefix}${match[1].padStart(3, '0')}`.toUpperCase();
           matchedPlayer = directoryPlayers.find(p => p.player_code === normalizedCode);
 
-          // Limpiar el código del texto para ver si escribió un apodo o solo puso su código
           const onlyNickname = withoutIndex.replace(match[0], '').replace(/[()\-_*~.]/g, ' ').replace(/\s{2,}/g, ' ').trim();
 
           if (onlyNickname.length > 0) {
-            displayNickname = onlyNickname; // Conserva el apodo que escribió en WhatsApp
+            displayNickname = onlyNickname;
           } else if (matchedPlayer) {
-            displayNickname = matchedPlayer.full_name; // Si solo puso "TM005", pone su nombre real
+            displayNickname = matchedPlayer.full_name;
           } else {
             displayNickname = normalizedCode;
           }
         } else {
-          // Limpiar caracteres extraños pero conservar letras y números
           displayNickname = withoutIndex.replace(/[*_~.()]/g, ' ').replace(/\s{2,}/g, ' ').trim();
         }
 
@@ -1003,13 +1022,17 @@
         });
       });
 
-      if (rowsToInsert.length === 0) return showToast('No se hallaron líneas numeradas');
+      if (rowsToInsert.length === 0) return showToast('No se hallaron nombres válidos');
 
       if (!appendMode) {
         await sb.from('session_entries').delete().eq('session_id', activeSession.id);
       }
 
-      await sb.from('session_entries').insert(rowsToInsert);
+      const { error } = await sb.from('session_entries').insert(rowsToInsert);
+      if (error) {
+        showToast('Error al guardar lista: ' + error.message);
+        return;
+      }
       await loadActiveSessionEntries();
       showToast(`${rowsToInsert.length} jugadores procesados`);
     }
@@ -1075,6 +1098,7 @@
     }
 
     async function markAllAttended() {
+      if (!activeSession) return;
       await sb.from('session_entries').update({ attended: true }).eq('session_id', activeSession.id);
       currentEntries.forEach(e => e.attended = true);
       renderJornadaUI();
@@ -1088,6 +1112,7 @@
     }
 
     async function finalizeSessionAndFines() {
+      if (!activeSession) return;
       const fineVal = parseFloat(activeSession.fine_amount) || 0;
       for (const entry of currentEntries) {
         const fineToApply = entry.attended ? 0 : fineVal;
@@ -1101,6 +1126,7 @@
     }
 
     function renderJornadaUI() {
+      if (!activeSession) return;
       document.getElementById('sessionTitleInput').value = activeSession.title;
       document.getElementById('sessionDaySelect').value = activeSession.day_of_week;
       document.getElementById('quotaInput').value = activeSession.quota;
@@ -1130,7 +1156,6 @@
           : `<button onclick="openQuickRegister('${e.id}', '${escapeHtml(e.raw_name)}')" title="Clic para registrar jugador y darle código"
                      class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-md shrink-0">+ Dar Código</button>`;
 
-        // Si el ojito está activo y tiene registro oficial, muestra el nombre real; si no, el apodo de WhatsApp
         const displayedName = (showRealNames && e.players?.full_name) ? e.players.full_name : e.raw_name;
 
         return `
@@ -1145,7 +1170,6 @@
               <button onclick="togglePayment('${e.id}', 'cash')" class="px-2.5 py-1.5 rounded-lg text-xs font-extrabold border ${e.payment_status === 'cash' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-emerald-700 border-emerald-200'}">Efectivo</button>
               <button onclick="togglePayment('${e.id}', 'qr')" class="px-2.5 py-1.5 rounded-lg text-xs font-extrabold border ${e.payment_status === 'qr' ? 'bg-marvelBlue-600 text-white border-marvelBlue-600' : 'bg-white text-marvelBlue-700 border-marvelBlue-200'}">QR</button>
               
-              <!-- Asistencia a la derecha -->
               <label class="ml-1 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border cursor-pointer select-none ${e.attended ? 'bg-purple-600 text-white border-purple-600' : 'bg-slate-100 text-slate-600 border-slate-300'}">
                 <input type="checkbox" ${e.attended ? 'checked' : ''} onchange="toggleAttendance('${e.id}')" class="accent-white w-3.5 h-3.5" />
                 <span class="text-xs font-extrabold">Asistió</span>
@@ -1161,7 +1185,7 @@
     function openSessionsModal() {
       const list = document.getElementById('sessionsModalList');
       list.innerHTML = allSessions.map(s => `
-        <div onclick="selectSession('${s.id}')" class="p-3 rounded-xl border cursor-pointer ${s.id === activeSession.id ? 'bg-marvelBlue-50 border-marvelBlue-400' : 'bg-white border-slate-200'}">
+        <div onclick="selectSession('${s.id}')" class="p-3 rounded-xl border cursor-pointer ${s.id === activeSession?.id ? 'bg-marvelBlue-50 border-marvelBlue-400' : 'bg-white border-slate-200'}">
           <div class="font-extrabold text-sm">${escapeHtml(s.title)}</div>
           <div class="text-xs text-slate-500">${s.day_of_week} • Cuota: ${s.quota} Bs • Multa: ${s.fine_amount} Bs</div>
         </div>
@@ -1451,7 +1475,6 @@
         document.getElementById('imageReportModal').classList.remove('hidden');
       };
 
-      // Estampar logo propio del club en la cabecera si existe
       if (currentClub.logo_data) {
         const logoImg = new Image();
         logoImg.onload = () => {
@@ -1494,7 +1517,7 @@
       const el = document.getElementById('toastNotification');
       document.getElementById('toastMessage').textContent = msg;
       el.classList.remove('translate-y-16', 'opacity-0');
-      setTimeout(() => el.classList.add('translate-y-16', 'opacity-0'), 2800);
+      setTimeout(() => el.classList.add('translate-y-16', 'opacity-0'), 3200);
     }
   </script>
 </body>
