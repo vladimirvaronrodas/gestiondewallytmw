@@ -105,7 +105,7 @@
        ========================================================= -->
   <div id="appContainer" class="hidden flex-1 flex flex-col justify-between">
     
-    <!-- BARRA SUPERIOR (SE DESPLAZA CON EL SCROLL) -->
+    <!-- BARRA SUPERIOR -->
     <header class="bg-slate-950 text-white border-b border-slate-800">
       <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
@@ -139,7 +139,6 @@
           </div>
         </div>
 
-        <!-- Tarjeta de Jornada Activa -->
         <div onclick="openSessionsModal()" class="bg-slate-900 border border-slate-800 hover:border-marvelBlue-500 rounded-2xl p-2.5 transition flex flex-col sm:flex-row sm:items-center justify-between gap-2 cursor-pointer">
           <div class="flex items-center gap-2.5">
             <span class="w-3 h-3 rounded-full bg-marvelBlue-500 shrink-0"></span>
@@ -204,7 +203,6 @@
                 </button>
               </div>
 
-              <!-- Verificación Inline de Contraseña Personal (para Logo, QR o Nombre del Wally) -->
               <div id="assetAuthBox" class="hidden mt-2 flex items-center justify-center gap-1.5 bg-slate-100 p-2 rounded-xl border border-slate-300">
                 <span class="text-[10px] font-extrabold text-slate-700 uppercase">Tu Clave:</span>
                 <input type="password" id="assetPassInput" placeholder="••••••"
@@ -215,7 +213,6 @@
               </div>
               <p id="assetAuthError" class="hidden text-center text-[11px] font-bold text-marvelRed-600 mt-1">Contraseña incorrecta</p>
 
-              <!-- Caja Inline para Editar Nombre del Wally tras validar contraseña -->
               <div id="clubNameEditBox" class="hidden mt-2 flex items-center justify-center gap-1.5 bg-marvelBlue-50 p-2 rounded-xl border border-marvelBlue-200">
                 <input type="text" id="clubNameEditInput" placeholder="Nuevo nombre de tu Wally"
                        onkeydown="if(event.key==='Enter') saveClubName()"
@@ -256,13 +253,8 @@
                   <input type="text" id="sessionTitleInput" onchange="updateSessionMeta()" class="w-full font-bold text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2" />
                 </div>
                 <div class="sm:col-span-2">
-                  <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Día</label>
-                  <select id="sessionDaySelect" onchange="updateSessionMeta()" class="w-full font-bold text-sm bg-slate-50 border border-slate-200 rounded-xl px-2 py-2">
-                    <option value="Lunes">Lunes</option>
-                    <option value="Miércoles">Miércoles</option>
-                    <option value="Viernes">Viernes</option>
-                    <option value="Otro">Otro</option>
-                  </select>
+                  <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Día (Automático)</label>
+                  <input type="text" id="sessionDayDisplay" readonly class="w-full font-bold text-sm bg-slate-100 border border-slate-200 text-slate-700 rounded-xl px-2 py-2 cursor-not-allowed" />
                 </div>
                 <div class="sm:col-span-2">
                   <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Cuota (Bs)</label>
@@ -363,7 +355,7 @@
               <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200">
                 <div>
                   <h2 class="font-display font-black text-lg text-marvelRed-600 uppercase">Control de Multas</h2>
-                  <p class="text-xs text-slate-500">Multas generadas automáticamente a quienes no marcaron asistencia.</p>
+                  <p class="text-xs text-slate-500">Multas generadas a quienes no marcaron asistencia. El botón verde se activa si el jugador tiene teléfono en su código.</p>
                 </div>
                 <select id="finesSessionFilter" onchange="renderFinesTab()" class="text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
                   <option value="all">Todas las pendientes</option>
@@ -420,21 +412,22 @@
               <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
                 <div>
                   <h2 class="font-display font-black text-lg text-slate-900 uppercase">Padrón Oficial de Jugadores</h2>
-                  <p class="text-xs text-slate-500">Registra manualmente a un jugador para asignarle su código correlativo de 3 dígitos (<strong id="prefixExample">TM001</strong>).</p>
+                  <p class="text-xs text-slate-500">Códigos correlativos de 3 dígitos (<strong id="prefixExample">TM001</strong>) y celular de 8 dígitos (+591).</p>
                 </div>
                 <button onclick="copyPlayersDirectoryWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold px-3.5 py-2 rounded-xl shadow">
                   📋 Copiar Lista de Códigos
                 </button>
               </div>
 
-              <div class="flex gap-2 mb-4">
-                <input type="text" id="newDirectoryPlayerName" onkeydown="if(event.key==='Enter') createOfficialPlayer()" placeholder="Nombre y apellido real del jugador..." class="flex-1 text-sm bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5" />
-                <button onclick="createOfficialPlayer()" class="bg-marvelBlue-600 hover:bg-marvelBlue-700 text-white text-xs font-extrabold px-5 py-2.5 rounded-xl shadow">
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 mb-4">
+                <input type="text" id="newDirectoryPlayerName" onkeydown="if(event.key==='Enter') createOfficialPlayer()" placeholder="Nombre y apellido real..." class="sm:col-span-6 text-sm bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5" />
+                <input type="tel" id="newDirectoryPlayerPhone" maxlength="8" inputmode="numeric" onkeydown="if(event.key==='Enter') createOfficialPlayer()" placeholder="Celular 8 dígitos (Ej: 71234567)" class="sm:col-span-3 text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-bold" />
+                <button onclick="createOfficialPlayer()" class="sm:col-span-3 bg-marvelBlue-600 hover:bg-marvelBlue-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl shadow">
                   + Asignar Código
                 </button>
               </div>
 
-              <div id="directoryListContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+              <div id="directoryListContainer" class="space-y-2"></div>
             </div>
           </div>
 
@@ -447,6 +440,33 @@
     </footer>
   </div>
 
+  <!-- MODAL: EDITAR JUGADOR DEL PADRÓN (NOMBRE + CELULAR 8 DÍGITOS) -->
+  <div id="editPlayerModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-display font-black text-base uppercase">Editar Jugador <span id="editPlayerCodeBadge" class="text-marvelBlue-600"></span></h3>
+        <button onclick="document.getElementById('editPlayerModal').classList.add('hidden')" class="font-bold text-slate-500">✕</button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-extrabold text-slate-600 mb-1">Nombre y Apellido Real</label>
+          <input type="text" id="editPlayerNameInput" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold" />
+        </div>
+        <div>
+          <label class="block text-xs font-extrabold text-slate-600 mb-1">Celular Bolivia (8 dígitos, se antepone +591)</label>
+          <div class="flex items-center border border-slate-300 rounded-xl overflow-hidden bg-slate-50">
+            <span class="px-3 py-2 text-xs font-black text-slate-600 bg-slate-200 select-none">+591</span>
+            <input type="tel" id="editPlayerPhoneInput" maxlength="8" inputmode="numeric" placeholder="71234567" class="w-full bg-white px-3 py-2 text-sm font-bold focus:outline-none" />
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-1">
+        <button onclick="document.getElementById('editPlayerModal').classList.add('hidden')" class="px-4 py-2 text-xs font-bold text-slate-500">Cancelar</button>
+        <button onclick="saveEditedPlayer()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: REGISTRAR INVITADO RÁPIDAMENTE Y DARLE CÓDIGO -->
   <div id="quickRegisterModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
@@ -456,6 +476,13 @@
         <label class="block text-xs font-bold mb-1">Nombre y Apellido Real</label>
         <input type="text" id="quickRegNameInput" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold" />
       </div>
+      <div>
+        <label class="block text-xs font-bold mb-1">Celular 8 dígitos (opcional)</label>
+        <div class="flex items-center border border-slate-300 rounded-xl overflow-hidden bg-slate-50">
+          <span class="px-3 py-2 text-xs font-black text-slate-600 bg-slate-200 select-none">+591</span>
+          <input type="tel" id="quickRegPhoneInput" maxlength="8" inputmode="numeric" placeholder="71234567" class="w-full bg-white px-3 py-2 text-sm font-bold focus:outline-none" />
+        </div>
+      </div>
       <div class="flex justify-end gap-2">
         <button onclick="document.getElementById('quickRegisterModal').classList.add('hidden')" class="px-4 py-2 text-xs font-bold text-slate-500">Cancelar</button>
         <button onclick="confirmQuickRegister()" class="bg-marvelBlue-600 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl">Guardar y Asignar</button>
@@ -463,22 +490,18 @@
     </div>
   </div>
 
-  <!-- MODAL: NUEVA FECHA -->
+  <!-- MODAL: NUEVA FECHA (FECHA PASADA O DE HOY + DÍA AUTOMÁTICO + SERIE SI SE REPITE EL DÍA) -->
   <div id="newSessionModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <h3 class="font-display font-black text-lg uppercase">Crear Nueva Jornada</h3>
+      <h3 class="font-display font-black text-lg uppercase">Nueva Fecha / Jornada</h3>
+      <p class="text-xs text-slate-500">Elige una fecha anterior o la de hoy. El día se calcula solo y, si ya hay partido ese día, se numera automáticamente.</p>
       <div>
         <label class="block text-xs font-bold text-slate-600 mb-1">Fecha del Partido</label>
-        <input type="date" id="newModalDate" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold" />
+        <input type="date" id="newModalDate" onchange="syncNewSessionDayPreview()" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold" />
       </div>
       <div>
-        <label class="block text-xs font-bold text-slate-600 mb-1">Día de la Semana</label>
-        <select id="newModalDay" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold">
-          <option value="Lunes">Lunes</option>
-          <option value="Miércoles">Miércoles</option>
-          <option value="Viernes">Viernes</option>
-          <option value="Otro">Otro</option>
-        </select>
+        <label class="block text-xs font-bold text-slate-600 mb-1">Día Calculado</label>
+        <input type="text" id="newModalDayPreview" readonly class="w-full border border-slate-200 bg-slate-100 text-slate-700 rounded-xl px-3 py-2 text-sm font-bold cursor-not-allowed" />
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
@@ -492,7 +515,7 @@
       </div>
       <div class="flex justify-end gap-2 pt-2">
         <button onclick="document.getElementById('newSessionModal').classList.add('hidden')" class="px-4 py-2 text-xs font-bold text-slate-600">Cancelar</button>
-        <button onclick="confirmCreateSession()" class="bg-marvelRed-600 text-white text-xs font-extrabold px-5 py-2.5 rounded-xl">Crear Jornada</button>
+        <button onclick="confirmCreateSession()" class="bg-marvelRed-600 text-white text-xs font-extrabold px-5 py-2.5 rounded-xl">Guardar Jornada</button>
       </div>
     </div>
   </div>
@@ -501,7 +524,7 @@
   <div id="sessionsModal" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 z-50 bg-slate-950/80 flex items-center justify-center p-4">
     <div onclick="event.stopPropagation()" class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
       <div class="px-5 py-4 bg-slate-900 text-white flex justify-between items-center">
-        <span class="font-display font-extrabold text-sm uppercase">Seleccionar Jornada</span>
+        <span class="font-display font-extrabold text-sm uppercase">Historial / Seleccionar Jornada</span>
         <button onclick="document.getElementById('sessionsModal').classList.add('hidden')" class="font-bold">✕</button>
       </div>
       <div id="sessionsModalList" class="p-4 overflow-y-auto space-y-2 flex-1"></div>
@@ -592,7 +615,8 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzeXR3cXV6bWxtamVpdXRtcmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU0MzI3NjIsImV4cCI6MjExMTAwODc2Mn0.57lxjo_j_zjapduJZVL8Y_AHm9gqsk7wzZCUFxFTE8M';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Estado Global
+    const WHATSAPP_SVG = `<svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.52 3.48A11.82 11.82 0 0 0 12.04 0C5.45 0 .09 5.36.09 11.95c0 2.11.55 4.17 1.6 5.99L0 24l6.23-1.63a11.9 11.9 0 0 0 5.81 1.48h.01c6.59 0 11.95-5.36 11.95-11.95 0-3.19-1.24-6.19-3.48-8.42zm-8.47 18.36h-.01a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.7.97.99-3.61-.24-.37a9.86 9.86 0 0 1-1.51-5.31c0-5.45 4.44-9.89 9.9-9.89 2.64 0 5.12 1.03 6.99 2.9a9.83 9.83 0 0 1 2.9 7c0 5.45-4.44 9.89-9.9 9.89zm5.43-7.4c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.88 1.22 3.08.15.2 2.1 3.2 5.09 4.49.71.31 1.27.49 1.7.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35z"/></svg>`;
+
     let currentUser = null;
     let currentProfile = null;
     let currentClub = null;
@@ -603,6 +627,32 @@
     let showRealNames = false;
     let pendingAssetType = null;
     let quickRegEntryId = null;
+    let editingPlayerId = null;
+
+    function getLocalTodayIso() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function getDayNameFromDateStr(dateStr) {
+      if (!dateStr) return 'Lunes';
+      const parts = dateStr.split('-').map(Number);
+      if (parts.length !== 3) return 'Otro';
+      const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+      const dayMap = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      return dayMap[dt.getDay()] || 'Otro';
+    }
+
+    function buildUniqueSessionTitle(dateStr, dayName) {
+      const sameDayCount = allSessions.filter(s => s.session_date === dateStr).length;
+      if (sameDayCount === 0) {
+        return `${dayName} ${dateStr}`;
+      }
+      return `${dayName} ${dateStr} — Partido ${sameDayCount + 1}`;
+    }
 
     // =========================================================
     // INICIO Y LOGIN CON USUARIO + CONTRASEÑA
@@ -893,8 +943,21 @@
     }
 
     // =========================================================
-    // PADRÓN DE JUGADORES CON CÓDIGO DE 3 DÍGITOS (TM001)
+    // PADRÓN DE JUGADORES (CÓDIGO + NOMBRE + CELULAR 8 DÍGITOS + EDITAR + ELIMINAR)
     // =========================================================
+    function sanitizePhone8(rawPhone) {
+      const digits = String(rawPhone || '').replace(/\D/g, '');
+      if (digits.startsWith('591') && digits.length === 11) return digits.slice(3);
+      return digits.slice(0, 8);
+    }
+
+    function openDirectWhatsApp(phone8, messageText) {
+      const clean8 = sanitizePhone8(phone8);
+      if (clean8.length < 7) return showToast('Jugador sin número de celular registrado');
+      const url = `https://wa.me/591${clean8}?text=${encodeURIComponent(messageText)}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
     async function loadDirectoryPlayers() {
       if (!currentClub) return;
       const { data } = await sb.from('players').select('*').eq('club_id', currentClub.id).order('player_number', { ascending: true });
@@ -902,9 +965,12 @@
       renderDirectoryTab();
     }
 
-    async function createOfficialPlayer(customName = null) {
-      const input = document.getElementById('newDirectoryPlayerName');
-      const fullName = (customName || input.value).trim();
+    async function createOfficialPlayer(customName = null, customPhone = null) {
+      const nameInput = document.getElementById('newDirectoryPlayerName');
+      const phoneInput = document.getElementById('newDirectoryPlayerPhone');
+      const fullName = (customName || nameInput.value).trim();
+      const phone8 = sanitizePhone8(customPhone !== null ? customPhone : phoneInput.value);
+
       if (!fullName || !currentClub) return null;
 
       const maxNum = directoryPlayers.reduce((max, p) => Math.max(max, p.player_number), 0);
@@ -916,29 +982,116 @@
         club_id: currentClub.id,
         player_number: nextNum,
         player_code: code,
-        full_name: fullName
+        full_name: fullName,
+        phone: phone8 || null
       }).select().single();
 
       if (error) {
         showToast('Error al registrar jugador: ' + error.message);
         return null;
       }
-      if (!customName) input.value = '';
+      if (!customName) {
+        nameInput.value = '';
+        phoneInput.value = '';
+      }
       await loadDirectoryPlayers();
       showToast(`Registrado: ${code} — ${fullName}`);
       return data;
     }
 
+    function openEditPlayerModal(playerId) {
+      const player = directoryPlayers.find(p => p.id === playerId);
+      if (!player) return;
+      editingPlayerId = player.id;
+      document.getElementById('editPlayerCodeBadge').textContent = player.player_code;
+      document.getElementById('editPlayerNameInput').value = player.full_name;
+      document.getElementById('editPlayerPhoneInput').value = sanitizePhone8(player.phone);
+      document.getElementById('editPlayerModal').classList.remove('hidden');
+    }
+
+    async function saveEditedPlayer() {
+      if (!editingPlayerId) return;
+      const newName = document.getElementById('editPlayerNameInput').value.trim();
+      const newPhone = sanitizePhone8(document.getElementById('editPlayerPhoneInput').value);
+      if (!newName) return showToast('El nombre no puede estar vacío');
+
+      const { error } = await sb.from('players').update({
+        full_name: newName,
+        phone: newPhone || null
+      }).eq('id', editingPlayerId);
+
+      if (error) {
+        showToast('Error al actualizar jugador: ' + error.message);
+        return;
+      }
+
+      document.getElementById('editPlayerModal').classList.add('hidden');
+      editingPlayerId = null;
+      await loadDirectoryPlayers();
+      await loadActiveSessionEntries();
+      showToast('Jugador actualizado correctamente');
+    }
+
+    async function deleteDirectoryPlayer(playerId) {
+      const player = directoryPlayers.find(p => p.id === playerId);
+      if (!player) return;
+      const ok = confirm(`¿Eliminar a ${player.full_name} (${player.player_code}) del padrón?`);
+      if (!ok) return;
+
+      await sb.from('session_entries').update({ player_id: null }).eq('player_id', playerId);
+      const { error } = await sb.from('players').delete().eq('id', playerId);
+      if (error) {
+        showToast('Error al eliminar: ' + error.message);
+        return;
+      }
+      await loadDirectoryPlayers();
+      await loadActiveSessionEntries();
+      showToast(`Jugador ${player.player_code} eliminado`);
+    }
+
     function renderDirectoryTab() {
       const container = document.getElementById('directoryListContainer');
-      container.innerHTML = directoryPlayers.map(p => `
-        <div class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50">
-          <div class="flex items-center gap-2.5">
-            <span class="bg-marvelBlue-600 text-white font-display font-black text-xs px-2.5 py-1 rounded-lg">${p.player_code}</span>
-            <span class="font-bold text-sm text-slate-900">${escapeHtml(p.full_name)}</span>
+      if (directoryPlayers.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">Aún no hay jugadores registrados en el padrón.</p>`;
+        return;
+      }
+
+      container.innerHTML = directoryPlayers.map(p => {
+        const hasPhone = sanitizePhone8(p.phone).length >= 7;
+        const greetingMsg = `Hola ${p.full_name}, ¿cómo estás? Te escribe el administrador de ${currentClub.name}.`;
+        const waBtn = hasPhone
+          ? `<button type="button" onclick="openDirectWhatsApp('${escapeHtml(p.phone)}', '${escapeHtml(greetingMsg)}')" title="Enviar WhatsApp a +591${escapeHtml(p.phone)}"
+                     class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-extrabold shadow-sm transition">
+               ${WHATSAPP_SVG}
+               <span>+591 ${escapeHtml(p.phone)}</span>
+             </button>`
+          : `<button type="button" disabled title="Sin número registrado"
+                     class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-400 border border-slate-200 text-xs font-bold cursor-not-allowed">
+               ${WHATSAPP_SVG}
+               <span>Sin cel</span>
+             </button>`;
+
+        return `
+          <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl border border-slate-200 bg-slate-50">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="bg-marvelBlue-600 text-white font-display font-black text-xs px-2.5 py-1 rounded-lg shrink-0">${p.player_code}</span>
+              <span class="font-bold text-sm text-slate-900 truncate">${escapeHtml(p.full_name)}</span>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              ${waBtn}
+              <button type="button" onclick="openEditPlayerModal('${p.id}')" title="Editar nombre o celular"
+                      class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-xs font-bold transition">
+                ✏️
+              </button>
+              <button type="button" onclick="deleteDirectoryPlayer('${p.id}')" title="Eliminar jugador"
+                      class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-marvelRed-50 border border-slate-300 hover:border-marvelRed-300 text-xs font-bold transition">
+                🗑️
+              </button>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function copyPlayersDirectoryWhatsApp() {
@@ -949,7 +1102,7 @@
     }
 
     // =========================================================
-    // PROCESAMIENTO WHATSAPP (SOLO LÍNEAS NUMERADAS VÁLIDAS + LETRAS + CÓDIGO PREFIJO)
+    // PROCESAMIENTO WHATSAPP (SOLO LÍNEAS NUMERADAS + LETRAS + CÓDIGO PREFIJO)
     // =========================================================
     function clearWhatsAppInput() {
       document.getElementById('whatsappRawInput').value = '';
@@ -963,12 +1116,13 @@
       allSessions = data || [];
 
       if (allSessions.length === 0) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalTodayIso();
+        const dayName = getDayNameFromDateStr(today);
         const { data: created, error } = await sb.from('sessions').insert({
           club_id: currentClub.id,
-          title: `${currentClub.name} — ${today}`,
+          title: `${dayName} ${today}`,
           session_date: today,
-          day_of_week: 'Lunes',
+          day_of_week: dayName,
           quota: currentClub.default_quota,
           fine_amount: currentClub.default_quota
         }).select().single();
@@ -985,16 +1139,20 @@
 
     async function loadActiveSessionEntries() {
       if (!activeSession) return;
-      const { data } = await sb.from('session_entries').select('*, players(player_code, full_name)').eq('session_id', activeSession.id).order('id', { ascending: true });
+      const { data } = await sb.from('session_entries').select('*, players(player_code, full_name, phone)').eq('session_id', activeSession.id).order('id', { ascending: true });
       currentEntries = data || [];
       renderJornadaUI();
     }
 
+    function syncNewSessionDayPreview() {
+      const dateVal = document.getElementById('newModalDate').value;
+      document.getElementById('newModalDayPreview').value = getDayNameFromDateStr(dateVal);
+    }
+
     function openNewSessionModal() {
-      const today = new Date();
-      document.getElementById('newModalDate').value = today.toISOString().split('T')[0];
-      const days = ['Otro', 'Lunes', 'Otro', 'Miércoles', 'Otro', 'Viernes', 'Otro'];
-      document.getElementById('newModalDay').value = days[today.getDay()];
+      const today = getLocalTodayIso();
+      document.getElementById('newModalDate').value = today;
+      document.getElementById('newModalDayPreview').value = getDayNameFromDateStr(today);
       document.getElementById('newModalQuota').value = currentClub?.default_quota || 15;
       document.getElementById('newModalFine').value = currentClub?.default_quota || 15;
       document.getElementById('newSessionModal').classList.remove('hidden');
@@ -1002,36 +1160,39 @@
 
     async function confirmCreateSession() {
       if (!currentClub) return;
-      const dateVal = document.getElementById('newModalDate').value;
-      const dayVal = document.getElementById('newModalDay').value;
+      const dateVal = document.getElementById('newModalDate').value || getLocalTodayIso();
+      const dayVal = getDayNameFromDateStr(dateVal);
+      const titleVal = buildUniqueSessionTitle(dateVal, dayVal);
       const quotaVal = parseFloat(document.getElementById('newModalQuota').value) || 15;
       const fineVal = parseFloat(document.getElementById('newModalFine').value) || 15;
 
-      const { error } = await sb.from('sessions').insert({
+      const { data: created, error } = await sb.from('sessions').insert({
         club_id: currentClub.id,
-        title: `${dayVal} ${dateVal}`,
+        title: titleVal,
         session_date: dateVal,
         day_of_week: dayVal,
         quota: quotaVal,
         fine_amount: fineVal
-      });
+      }).select().single();
 
       if (error) return showToast('Error al crear fecha: ' + error.message);
       document.getElementById('newSessionModal').classList.add('hidden');
       await loadSessions();
-      showToast('Nueva fecha creada');
+      if (created) {
+        activeSession = created;
+        await loadActiveSessionEntries();
+      }
+      showToast(`Guardado: ${titleVal}`);
     }
 
     async function updateSessionMeta() {
       if (!activeSession) return;
       activeSession.title = document.getElementById('sessionTitleInput').value;
-      activeSession.day_of_week = document.getElementById('sessionDaySelect').value;
       activeSession.quota = parseFloat(document.getElementById('quotaInput').value) || 0;
       activeSession.fine_amount = parseFloat(document.getElementById('fineInput').value) || 0;
 
       await sb.from('sessions').update({
         title: activeSession.title,
-        day_of_week: activeSession.day_of_week,
         quota: activeSession.quota,
         fine_amount: activeSession.fine_amount
       }).eq('id', activeSession.id);
@@ -1045,7 +1206,6 @@
 
       const appendMode = document.getElementById('appendModeCheckbox').checked;
       const prefix = (currentClub?.code_prefix || 'TM').toUpperCase();
-      const codeRegex = new RegExp(`\\b${prefix}[-\\s]?(\\d{1,3})\\b`, 'gi');
       const blockedWordsRegex = /\b(reglas|grupo|aceptamos|nivel|niveles|cancha|hora|fecha|cuota|multa|mixto|varones|damas|lista|wally|equipo|partido|puntual|tolerancia|bs)\b/i;
 
       const lines = rawText.split(/\r?\n/);
@@ -1059,11 +1219,9 @@
         // Ignorar líneas de reglas, avisos, dos puntos o símbolos de cancha/número
         if (blockedWordsRegex.test(trimmed) || /[:#]/.test(trimmed)) return;
 
-        // Quitar solo el número inicial y separadores de índice
         let withoutIndex = trimmed.replace(/^\d+[\s.\-–—)_:;•*]+/, '').trim();
         if (!withoutIndex) return;
 
-        // Detectar código del club actual (ej. TM001, WT004, LA012)
         let matchedPlayer = null;
         let foundCodes = [];
         const codeMatches = [...withoutIndex.matchAll(new RegExp(`\\b${prefix}[-\\s]?(\\d{1,3})\\b`, 'gi'))];
@@ -1073,9 +1231,7 @@
           matchedPlayer = directoryPlayers.find(p => p.player_code === normalizedCode);
         }
 
-        // Eliminar códigos del texto temporalmente para limpiar solo letras del nombre/apodo
         let tempWithoutCodes = withoutIndex.replace(new RegExp(`\\b${prefix}[-\\s]?(\\d{1,3})\\b`, 'gi'), ' ');
-        // Dejar solo letras (con acentos/ñ) y espacios
         let onlyLettersName = tempWithoutCodes
           .replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]/g, ' ')
           .replace(/\s{2,}/g, ' ')
@@ -1142,14 +1298,16 @@
     function openQuickRegister(entryId, currentRawName) {
       quickRegEntryId = entryId;
       document.getElementById('quickRegNameInput').value = currentRawName;
+      document.getElementById('quickRegPhoneInput').value = '';
       document.getElementById('quickRegisterModal').classList.remove('hidden');
     }
 
     async function confirmQuickRegister() {
       const realName = document.getElementById('quickRegNameInput').value.trim();
+      const phone8 = sanitizePhone8(document.getElementById('quickRegPhoneInput').value);
       if (!realName) return;
 
-      const createdPlayer = await createOfficialPlayer(realName);
+      const createdPlayer = await createOfficialPlayer(realName, phone8);
       if (createdPlayer && quickRegEntryId) {
         await sb.from('session_entries').update({ player_id: createdPlayer.id }).eq('id', quickRegEntryId);
       }
@@ -1207,7 +1365,7 @@
     function renderJornadaUI() {
       if (!activeSession) return;
       document.getElementById('sessionTitleInput').value = activeSession.title;
-      document.getElementById('sessionDaySelect').value = activeSession.day_of_week;
+      document.getElementById('sessionDayDisplay').value = activeSession.day_of_week || getDayNameFromDateStr(activeSession.session_date);
       document.getElementById('quotaInput').value = activeSession.quota;
       document.getElementById('fineInput').value = activeSession.fine_amount;
 
@@ -1217,7 +1375,7 @@
       const attended = currentEntries.filter(e => e.attended).length;
       const absent = total - attended;
 
-      document.getElementById('activeSessionCardTitle').textContent = `${activeSession.title} (${activeSession.day_of_week})`;
+      document.getElementById('activeSessionCardTitle').textContent = `${activeSession.title}`;
       document.getElementById('activeSessionCardStats').textContent = `${cash + qr}/${total} pagados • ${attended}/${total} asistieron`;
 
       document.getElementById('statTotalPlayers').textContent = total;
@@ -1266,7 +1424,7 @@
       list.innerHTML = allSessions.map(s => `
         <div onclick="selectSession('${s.id}')" class="p-3 rounded-xl border cursor-pointer ${s.id === activeSession?.id ? 'bg-marvelBlue-50 border-marvelBlue-400' : 'bg-white border-slate-200'}">
           <div class="font-extrabold text-sm">${escapeHtml(s.title)}</div>
-          <div class="text-xs text-slate-500">${s.day_of_week} • Cuota: ${s.quota} Bs • Multa: ${s.fine_amount} Bs</div>
+          <div class="text-xs text-slate-500">Fecha: ${escapeHtml(s.session_date)} • Cuota: ${s.quota} Bs • Multa: ${s.fine_amount} Bs</div>
         </div>
       `).join('');
       document.getElementById('sessionsModal').classList.remove('hidden');
@@ -1279,7 +1437,7 @@
     }
 
     // =========================================================
-    // PESTAÑA MULTAS + EXPORTACIÓN CON LOGO Y QR PROPIOS
+    // PESTAÑA MULTAS + WHATSAPP DIRECTO + EXPORTACIÓN INDIVIDUAL Y GENERAL
     // =========================================================
     let loadedFines = [];
     async function renderFinesTab() {
@@ -1294,7 +1452,7 @@
       }
 
       let query = sb.from('session_entries')
-        .select('*, sessions!inner(id, title, session_date, club_id), players(player_code, full_name)')
+        .select('*, sessions!inner(id, title, session_date, day_of_week, club_id), players(player_code, full_name, phone)')
         .eq('sessions.club_id', currentClub.id)
         .gt('fine_generated', 0);
 
@@ -1312,19 +1470,43 @@
 
       container.innerHTML = loadedFines.map(f => {
         const nameToShow = f.players?.full_name || f.raw_name;
+        const phone8 = sanitizePhone8(f.players?.phone);
+        const hasPhone = phone8.length >= 7;
+        const jornadaLabel = `${f.sessions.day_of_week || ''} ${f.sessions.session_date || f.sessions.title}`.trim();
+        const fineMsg = `Hola ${nameToShow}, ¿cómo estás? Soy el administrador de ${currentClub.name}. Te escribo por tu multa pendiente de ${f.fine_generated} Bs. del partido (${jornadaLabel}). Enseguida te envío la imagen y el QR.`;
+
+        const waButton = hasPhone
+          ? `<button type="button" onclick="openDirectWhatsApp('${phone8}', '${escapeHtml(fineMsg)}')" title="Contactar por WhatsApp (+591${phone8})"
+                     class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-extrabold shadow-sm transition">
+               ${WHATSAPP_SVG}
+               <span>WhatsApp</span>
+             </button>`
+          : `<button type="button" disabled title="Jugador sin número de celular en el padrón"
+                     class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-400 border border-slate-200 text-xs font-bold cursor-not-allowed">
+               ${WHATSAPP_SVG}
+               <span>Sin cel</span>
+             </button>`;
+
         return `
-          <div class="flex items-center justify-between p-3 rounded-xl border ${f.fine_paid ? 'bg-emerald-50 border-emerald-200' : 'bg-marvelRed-50/60 border-marvelRed-200'}">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl border ${f.fine_paid ? 'bg-emerald-50 border-emerald-200' : 'bg-marvelRed-50/60 border-marvelRed-200'}">
             <div>
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2">
                 ${f.players?.player_code ? `<span class="bg-slate-900 text-white text-[10px] font-black px-2 py-0.5 rounded">${f.players.player_code}</span>` : ''}
                 <span class="font-extrabold text-sm text-slate-900">${escapeHtml(nameToShow)}</span>
                 <span class="text-xs font-black text-marvelRed-600">(${f.fine_generated} Bs.)</span>
               </div>
-              <p class="text-[11px] text-slate-500 mt-0.5">Jornada: ${escapeHtml(f.sessions.title)}</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">Jornada: ${escapeHtml(f.sessions.title)} (${escapeHtml(f.sessions.session_date)})</p>
             </div>
-            <button onclick="toggleFinePaid('${f.id}', ${!f.fine_paid})" class="px-3 py-1.5 rounded-lg text-xs font-extrabold ${f.fine_paid ? 'bg-emerald-600 text-white' : 'bg-white border border-marvelRed-300 text-marvelRed-700'}">
-              ${f.fine_paid ? '✅ Pagada' : 'Marcar Pagada'}
-            </button>
+            <div class="flex flex-wrap items-center gap-1.5 self-end sm:self-center">
+              ${waButton}
+              <button type="button" onclick="generateSingleFineImage('${f.id}')" title="Exportar imagen individual de esta multa + QR"
+                      class="px-2.5 py-1.5 rounded-lg bg-marvelBlue-600 hover:bg-marvelBlue-700 text-white text-xs font-extrabold shadow-sm transition">
+                🖼️ Multa
+              </button>
+              <button type="button" onclick="toggleFinePaid('${f.id}', ${!f.fine_paid})" class="px-3 py-1.5 rounded-lg text-xs font-extrabold ${f.fine_paid ? 'bg-emerald-600 text-white' : 'bg-white border border-marvelRed-300 text-marvelRed-700'}">
+                ${f.fine_paid ? '✅ Pagada' : 'Marcar Pagada'}
+              </button>
+            </div>
           </div>
         `;
       }).join('');
@@ -1349,6 +1531,70 @@
       lines.push('', '📲 Cancelar al QR oficial del grupo.');
       navigator.clipboard.writeText(lines.join('\n'));
       showToast('Texto de multas copiado');
+    }
+
+    function generateSingleFineImage(entryId) {
+      const f = loadedFines.find(item => item.id === entryId);
+      if (!f) return;
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const width = 760;
+      const qrSectionH = currentClub.qr_data ? 260 : 0;
+      const height = 360 + qrSectionH;
+      canvas.width = width; canvas.height = height;
+
+      ctx.fillStyle = '#fff1f2'; ctx.fillRect(0, 0, width, height);
+      ctx.fillStyle = '#b91c1c'; ctx.fillRect(0, 0, width, 130);
+
+      ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
+      ctx.font = '900 28px "Montserrat", sans-serif';
+      ctx.fillText(`🚨 AVISO DE MULTA`, width / 2, 54);
+      ctx.font = '700 18px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(currentClub.name.toUpperCase(), width / 2, 92);
+
+      const code = f.players?.player_code ? `[${f.players.player_code}] ` : '';
+      const name = f.players?.full_name || f.raw_name;
+
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(45, 155, width - 90, 140);
+      ctx.strokeStyle = '#fecdd3'; ctx.lineWidth = 2; ctx.strokeRect(45, 155, width - 90, 140);
+
+      ctx.fillStyle = '#0f172a'; ctx.textAlign = 'center';
+      ctx.font = '800 24px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`${code}${name}`, width / 2, 202);
+
+      ctx.fillStyle = '#dc2626';
+      ctx.font = '900 32px "Montserrat", sans-serif';
+      ctx.fillText(`Monto: ${f.fine_generated} Bs.`, width / 2, 248);
+
+      ctx.fillStyle = '#475569';
+      ctx.font = '700 16px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`Partido: ${f.sessions.title} (${f.sessions.session_date})`, width / 2, 280);
+
+      let y = 315;
+      const drawFooterAndShow = () => {
+        ctx.fillStyle = '#0f172a'; ctx.fillRect(0, height - 55, width, 55);
+        ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
+        ctx.font = '700 15px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(`Escanea el QR para cancelar tu multa • ${currentClub.name}`, width / 2, height - 21);
+
+        const url = canvas.toDataURL('image/png');
+        document.getElementById('generatedReportPreview').src = url;
+        document.getElementById('downloadReportLink').href = url;
+        document.getElementById('downloadReportLink').download = `Multa_${name.replace(/\s+/g, '_')}.png`;
+        document.getElementById('imageReportModal').classList.remove('hidden');
+      };
+
+      if (currentClub.qr_data) {
+        const qrImg = new Image();
+        qrImg.onload = () => {
+          ctx.drawImage(qrImg, (width - 210) / 2, y + 10, 210, 210);
+          drawFooterAndShow();
+        };
+        qrImg.src = currentClub.qr_data;
+      } else {
+        drawFooterAndShow();
+      }
     }
 
     function generateFinesImage() {
@@ -1434,8 +1680,11 @@
       if (!fromInput.value) {
         const d = new Date();
         d.setDate(d.getDate() - 30);
-        fromInput.value = d.toISOString().split('T')[0];
-        toInput.value = new Date().toISOString().split('T')[0];
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        fromInput.value = `${y}-${m}-${day}`;
+        toInput.value = getLocalTodayIso();
       }
 
       const dayFilter = document.getElementById('rankDayFilter').value;
@@ -1501,7 +1750,7 @@
     // REPORTES DE JORNADA (TEXTO E IMAGEN PNG CON LOGO PROPIO)
     // =========================================================
     function copyWhatsAppCobros() {
-      const lines = [`🏐 *${currentClub.name.toUpperCase()}*`, `📅 *${activeSession.title} (${activeSession.day_of_week})*`, ''];
+      const lines = [`🏐 *${currentClub.name.toUpperCase()}*`, `📅 *${activeSession.title}*`, ''];
       currentEntries.forEach((e, i) => {
         const name = (showRealNames && e.players?.full_name) ? e.players.full_name : e.raw_name;
         const pay = e.payment_status === 'cash' ? '💵 Efectivo' : e.payment_status === 'qr' ? '📲 QR' : '❌ Falta pagar';
@@ -1526,7 +1775,7 @@
       ctx.font = '900 30px "Montserrat", sans-serif';
       ctx.fillText(`🏐 ${currentClub.name.toUpperCase()}`, width / 2, 60);
       ctx.font = '700 19px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(`${activeSession.title} (${activeSession.day_of_week})`, width / 2, 102);
+      ctx.fillText(`${activeSession.title}`, width / 2, 102);
 
       let y = 170;
       currentEntries.forEach((e, i) => {
