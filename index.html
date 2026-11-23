@@ -346,9 +346,15 @@
                   </button>
                 </div>
 
-                <button onclick="markAllAttended()" class="text-xs font-extrabold bg-purple-100 hover:bg-purple-200 text-purple-800 px-3 py-1.5 rounded-lg transition">
-                  ✓ Todos Asistieron
-                </button>
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <button type="button" onclick="clearCurrentSessionEntries()" title="Vaciar todos los jugadores de esta lista"
+                          class="text-xs font-extrabold bg-marvelRed-50 hover:bg-marvelRed-100 text-marvelRed-700 border border-marvelRed-200 px-3 py-1.5 rounded-lg transition">
+                    🗑️ Limpiar lista
+                  </button>
+                  <button type="button" onclick="markAllAttended()" class="text-xs font-extrabold bg-purple-100 hover:bg-purple-200 text-purple-800 px-3 py-1.5 rounded-lg transition">
+                    ✓ Todos Asistieron
+                  </button>
+                </div>
               </div>
 
               <div id="playersListContainer" class="space-y-2"></div>
@@ -1259,7 +1265,7 @@
     }
 
     // =========================================================
-    // PROCESAMIENTO WHATSAPP (SOLO LÍNEAS NUMERADAS + PREFIJO 2-3 LETRAS + NÚMEROS A 3 DÍGITOS)
+    // PROCESAMIENTO WHATSAPP EN ORDEN ESTRICTO (1, 2, 3...)
     // =========================================================
     function clearWhatsAppInput() {
       document.getElementById('whatsappRawInput').value = '';
@@ -1296,7 +1302,11 @@
 
     async function loadActiveSessionEntries() {
       if (!activeSession) return;
-      const { data } = await sb.from('session_entries').select('*, players(player_code, full_name, phone)').eq('session_id', activeSession.id).order('id', { ascending: true });
+      const { data } = await sb
+        .from('session_entries')
+        .select('*, players(player_code, full_name, phone)')
+        .eq('session_id', activeSession.id)
+        .order('id', { ascending: true });
       currentEntries = data || [];
       renderJornadaUI();
     }
@@ -1422,15 +1432,27 @@
 
       if (!appendMode) {
         await sb.from('session_entries').delete().eq('session_id', activeSession.id);
+        currentEntries = [];
       }
 
-      const { error } = await sb.from('session_entries').insert(rowsToInsert);
-      if (error) {
-        showToast('Error al guardar lista: ' + error.message);
-        return;
+      // Insertar fila por fila en orden estricto para garantizar que NRO 1 quede primero en la base de datos
+      const insertedOrdered = [];
+      for (const row of rowsToInsert) {
+        const { data: insertedRow, error } = await sb
+          .from('session_entries')
+          .insert(row)
+          .select('*, players(player_code, full_name, phone)')
+          .single();
+        if (error) {
+          showToast('Error al guardar lista: ' + error.message);
+          return;
+        }
+        if (insertedRow) insertedOrdered.push(insertedRow);
       }
-      await loadActiveSessionEntries();
-      showToast(`${rowsToInsert.length} jugadores procesados`);
+
+      currentEntries = appendMode ? [...currentEntries, ...insertedOrdered] : insertedOrdered;
+      renderJornadaUI();
+      showToast(`${insertedOrdered.length} jugadores procesados en orden`);
     }
 
     // =========================================================
@@ -1477,18 +1499,27 @@
     }
 
     // =========================================================
-    // PAGOS, ASISTENCIA (DERECHA) Y MULTAS AUTOMÁTICAS
+    // PAGOS (MARCA ASISTIÓ AUTOMÁTICO), LIMPIAR LISTA Y MULTAS
     // =========================================================
     async function togglePayment(entryId, status) {
       const entry = currentEntries.find(e => e.id === entryId);
+      if (!entry) return;
       const nextStatus = entry.payment_status === status ? 'none' : status;
-      await sb.from('session_entries').update({ payment_status: nextStatus }).eq('id', entryId);
+      const nextAttended = nextStatus !== 'none' ? true : entry.attended;
+
+      await sb
+        .from('session_entries')
+        .update({ payment_status: nextStatus, attended: nextAttended })
+        .eq('id', entryId);
+
       entry.payment_status = nextStatus;
+      entry.attended = nextAttended;
       renderJornadaUI();
     }
 
     async function toggleAttendance(entryId) {
       const entry = currentEntries.find(e => e.id === entryId);
+      if (!entry) return;
       const nextVal = !entry.attended;
       await sb.from('session_entries').update({ attended: nextVal }).eq('id', entryId);
       entry.attended = nextVal;
@@ -1501,6 +1532,22 @@
       currentEntries.forEach(e => e.attended = true);
       renderJornadaUI();
       showToast('Todos marcados como asistentes');
+    }
+
+    async function clearCurrentSessionEntries() {
+      if (!activeSession) return;
+      if (currentEntries.length === 0) return showToast('La lista ya está vacía');
+      const ok = confirm('¿Vaciar todos los jugadores de esta jornada actual?');
+      if (!ok) return;
+
+      const { error } = await sb.from('session_entries').delete().eq('session_id', activeSession.id);
+      if (error) {
+        showToast('Error al limpiar lista: ' + error.message);
+        return;
+      }
+      currentEntries = [];
+      renderJornadaUI();
+      showToast('Lista de jornada limpiada');
     }
 
     async function removeEntry(entryId) {
